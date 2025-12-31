@@ -1,7 +1,3 @@
-/**************************************************************************/
-/*              COPYRIGHT Carnegie Mellon University 2023                 */
-/* Do not post this file or any derivative on a public site or repository */
-/**************************************************************************/
 /* C0VM structs, function signatures, and opcodes
  * 15-122, Principles of Imperative Computation
  * William Lovas, Rob Simmons, and Tom Cortina
