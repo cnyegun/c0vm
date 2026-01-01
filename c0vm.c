@@ -194,27 +194,75 @@ IF_DEBUG(fprintf(stderr, "Returning %d from execute()\n", retval));
 
     /* Pushing constants */
 
-    case BIPUSH:
+    case BIPUSH: {
+			int32_t b = (int32_t) (byte) P[pc + 1];
+			pc += 2;
+			c0v_push(S, int2val(b));
+			break;
+		}
 
-    case ILDC:
+    case ILDC: {
+			// Read int32_t v from int_pool and push to the op stack
+			uint16_t c1 = (uint16_t) P[pc + 1];
+			uint16_t c2 = (uint16_t) P[pc + 2];
+			int32_t x = bc0->int_pool[(c1<<8)|c2];
+			c0v_push(S, int2val(x));
+			pc += 3;
+			break;
+		}
 
-    case ALDC:
+    case ALDC: {
+			// Read address a from &string_pool and push it to the op stack
+			uint16_t c1 = (uint16_t) P[pc + 1];
+			uint16_t c2 = (uint16_t) P[pc + 2];
+			char *a = &(bc0->string_pool[(c1<<8)|c2]);
+			c0v_push(S, ptr2val(a));
+			pc += 3;
+			break;
+		}
 
-    case ACONST_NULL:
+    case ACONST_NULL: {
+			pc++;
+			c0v_push(S, ptr2val(NULL));
+			break;
+		}
 
 
     /* Operations on local variables */
 
-    case VLOAD:
+    case VLOAD: {
+			ubyte i = P[pc + 1];
+			pc += 2;
+			c0v_push(S, V[i]);
+			break;
+		}
 
-    case VSTORE:
+    case VSTORE: {
+			ubyte i = P[pc + 1];
+			pc += 2;
+			c0_value v = c0v_pop(S);
+			V[i] = v;
+			break;
+		}
 
 
     /* Assertions and errors */
 
-    case ATHROW:
+    case ATHROW: {
+			pc++;
+			char *a = (char*) val2ptr(c0v_pop(S));
+			c0_user_error(a);
+			break;
+		}
 
-    case ASSERT:
+    case ASSERT: {
+			pc++;
+			char *a = (char*) val2ptr(c0v_pop(S));
+			int32_t x = (int32_t) val2int(c0v_pop(S));
+			if (x == 0)
+				c0_assertion_failure(a);
+			break;
+		}
 
 
     /* Control flow operations */

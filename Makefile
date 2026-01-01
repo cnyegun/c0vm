@@ -1,9 +1,9 @@
 # C0_INSTALL is the directory containing the c0 deployment
 # e.g., /usr/local/share/cc0 if cc0 is at /usr/local/share/cc0/bin/cc0
 C0_TMP=$(shell dirname `which cc0`)
-C0_INSTALL=$(shell dirname $(C0_TMP))
-C0LIBDIR=$(C0_INSTALL)/lib
-C0RUNTIMEDIR=$(C0_INSTALL)/runtime
+C0_INSTALL=/usr/share/cc0
+C0LIBDIR=/usr/share/cc0/lib
+C0RUNTIMEDIR=/usr/share/cc0/runtime
 
 # Compiling c0vm
 CFLAGS=-fwrapv -Wall -Wextra -Werror -g
