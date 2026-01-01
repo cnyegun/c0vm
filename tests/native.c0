@@ -1,0 +1,7 @@
+#use <string> 
+#use <conio>
+int main() {
+	string s = "YAYAYAYAYAYA";
+	printf("%s, len: %d \n", s, string_length(s));
+	return 0;
+}

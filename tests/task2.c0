@@ -1,0 +1,6 @@
+int main() {
+	int x = 15122;
+	assert(true);
+	int y = x * x;
+	return y;
+}

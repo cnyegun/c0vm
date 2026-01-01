@@ -1,0 +1,9 @@
+#use <conio>
+int factorial(int n) {
+	return n == 0 ? 1 : n * factorial(n-1);
+}
+int main () {
+	printint(factorial(15));
+	println(" is the factorial of 15");
+	return 0;
+}
