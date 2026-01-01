@@ -50,6 +50,7 @@ Locals variable are stored in a `c0_value` array. Every struct `function_info` h
 ### 1.2.5 The Call Stack
 
 The C0VM has a call stack consisting of _frames_, each one containing local variables, a local operand stack, and a return address. The call stack grows when a function is called and shrink when a function returns, deallocating the frame during the return. 
+
 Every frame consists of the four components that represent the current state of some function call that got interrupted in order to call another function. It contains the operand stack S for computing expression values, a pointer P to the function's byte code, a return address pc, which is the address of the next instruction in the interpreted function, and an array of locals V. At any point of execution there is a _current frame_ as well as a _calling frame_. The latter becomes the current frame when a function returns to its caller.
 
 ### 1.2.6 Constant Pools
