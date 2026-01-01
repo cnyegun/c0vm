@@ -24,16 +24,17 @@ int execute(struct bc0_file *bc0) {
   REQUIRES(bc0 != NULL);
 
   /* Variables */
-  c0v_stack_t S; /* Operand stack of C0 values */
-  ubyte *P;      /* Array of bytes that make up the current function */
-  size_t pc;     /* Current location within the current byte array P */
-  c0_value *V;   /* Local variables (you won't need this till Task 2) */
+  c0v_stack_t S = c0v_stack_new(); 							/* Operand stack of C0 values */
+  ubyte *P = bc0->function_pool[0].code;	     	/* Array of bytes that make up the current function */
+  size_t pc = 0;							     							/* Current location within the current byte array P */
+	/* Local variables (you won't need this till Task 2) */
+  c0_value *V = xcalloc((size_t) bc0->function_pool[0].num_vars, sizeof *V);   
   (void) V;      // silences compilation errors about V being currently unused
 
   /* The call stack, a generic stack that should contain pointers to frames */
   /* You won't need this until you implement functions. */
-  gstack_t callStack;
-  (void) callStack; // silences compilation errors about callStack being currently unused
+  // gstack_t callStack;
+  // (void) callStack; // silences compilation errors about callStack being currently unused
 
   while (true) {
 
@@ -61,7 +62,14 @@ int execute(struct bc0_file *bc0) {
       break;
     }
 
-    case SWAP:
+    case SWAP: {
+			pc++;
+			c0_value v1 = c0v_pop(S);
+			c0_value v2 = c0v_pop(S);
+			c0v_push(S, v1);
+			c0v_push(S, v2);
+			break;
+		}
 
 
     /* Returning from a function.
@@ -75,32 +83,116 @@ int execute(struct bc0_file *bc0) {
 // Another way to print only in DEBUG mode
 IF_DEBUG(fprintf(stderr, "Returning %d from execute()\n", retval));
       // Free everything before returning from the execute function!
+			c0v_stack_free(S);
+			free(V);
       return retval;
     }
 
-
     /* Arithmetic and Logical operations */
 
-    case IADD:
+    case IADD: {
+			pc++;
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+			c0v_push(S, int2val(x + y));
+			break;
+		}
 
-    case ISUB:
+    case ISUB: {
+			pc++;
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+			c0v_push(S, int2val(x - y));
+			break;
+		}
 
-    case IMUL:
+    case IMUL: {
+			pc++;
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+			c0v_push(S, int2val(x * y));
+			break;
+		}
 
-    case IDIV:
+    case IDIV: {
+			pc++;
+			int32_t y = val2int(c0v_pop(S));
+			if (y == 0) {
+				c0_arith_error("Division by zero");
+			}
+			int32_t x = val2int(c0v_pop(S));
+			if (x == INT32_MIN && y == -1) {
+				c0_arith_error("INT32_MIN / -1");
+			}
+			c0v_push(S, int2val(x / y));
+			break;
+		}
 
-    case IREM:
+    case IREM: {
+			pc++;
+			int32_t y = val2int(c0v_pop(S));
+			if (y == 0) {
+				c0_arith_error("Division by zero");
+			}
+			int32_t x = val2int(c0v_pop(S));
+			if (x == INT32_MIN && y == -1) {
+				c0_arith_error("INT32_MIN / -1");
+			}
+			c0v_push(S, int2val(x % y));
+			break;
+		}
 
-    case IAND:
+    case IAND: {
+			pc++;
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+			c0v_push(S, int2val(x & y));
+			break;
+		}
 
-    case IOR:
+    case IOR: {
+			pc++;
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+			c0v_push(S, int2val(x | y));
+			break;
+		}
 
-    case IXOR:
+    case IXOR: {
+			pc++;
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+			c0v_push(S, int2val(x ^ y));
+			break;
+		}
 
-    case ISHR:
+    case ISHR: {
+			pc++;
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+			if (y < 0 || y >= 32) {
+				c0_arith_error("Invalid shift range");
+				// I don't free here because exit() will terminate 
+				// and the system will reclaim
+				exit(EXIT_FAILURE);
+			}
+			c0v_push(S, int2val(x >> y));
+			break;
+		}
 
-    case ISHL:
-
+    case ISHL: {
+			pc++;
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+			if (y < 0 || y >= 32) {
+				c0_arith_error("Invalid shift range");
+				// I don't free here because exit() will terminate 
+				// and the system will reclaim
+				exit(EXIT_FAILURE);
+			}
+			c0v_push(S, int2val(x << y));
+			break;
+		}
 
     /* Pushing constants */
 
