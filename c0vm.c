@@ -16,8 +16,8 @@ typedef struct frame_info frame;
 struct frame_info {
   c0v_stack_t S;   /* Operand stack of C0 values */
   ubyte *P;        /* Function body */
-  size_t pc;       /* Program counter */
   c0_value *V;     /* The local variables */
+  size_t pc;       /* Program counter */
 };
 
 int execute(struct bc0_file *bc0) {
@@ -33,8 +33,7 @@ int execute(struct bc0_file *bc0) {
 
   /* The call stack, a generic stack that should contain pointers to frames */
   /* You won't need this until you implement functions. */
-  // gstack_t callStack;
-  // (void) callStack; // silences compilation errors about callStack being currently unused
+  gstack_t callStack = stack_new();
 
   while (true) {
 
@@ -78,14 +77,25 @@ int execute(struct bc0_file *bc0) {
      * need to revise it further when you write INVOKESTATIC. */
 
     case RETURN: {
-      int retval = val2int(c0v_pop(S));
-      assert(c0v_stack_empty(S));
-// Another way to print only in DEBUG mode
-IF_DEBUG(fprintf(stderr, "Returning %d from execute()\n", retval));
+			// Pop the last value from the stack
+			c0_value retval = c0v_pop(S);
+
       // Free everything before returning from the execute function!
 			c0v_stack_free(S);
 			free(V);
-      return retval;
+
+			// Resume the last frame if exist
+			if (!stack_empty(callStack)) {
+				frame *prev_frame = (frame *) pop(callStack);
+				S = prev_frame->S;
+				P = prev_frame->P;
+				pc = prev_frame->pc + 3;
+				V = prev_frame->V;
+				free(prev_frame);
+				c0v_push(S, retval);
+				break;
+			}
+			return val2int(retval);
     }
 
     /* Arithmetic and Logical operations */
@@ -367,9 +377,53 @@ IF_DEBUG(fprintf(stderr, "Returning %d from execute()\n", retval));
 
     /* Function call operations: */
 
-    case INVOKESTATIC:
+    case INVOKESTATIC: {
+			uint16_t o1 = P[pc + 1];
+			uint16_t o2 = P[pc + 2];
+			uint16_t fn_idx = (o1 << 8) | o2;
+			struct function_info fn = bc0->function_pool[fn_idx];
 
-    case INVOKENATIVE:
+			// Create a new frame of current execution environment
+			frame *f = xmalloc(sizeof(frame));
+			f->S = S;
+			f->P = P;
+			f->pc = pc;
+			f->V = V;
+			push(callStack, f);
+
+			// Set pc to the beginning of the function
+			V = xcalloc(fn.num_vars, sizeof *V);
+
+			for (int i = fn.num_args - 1; i >= 0; i--) {
+				V[i] = c0v_pop(S);
+			}
+
+			S = c0v_stack_new();
+			P = fn.code;
+			pc = 0;
+			break;
+		}
+
+    case INVOKENATIVE: {
+			uint16_t o1 = P[pc + 1];
+			uint16_t o2 = P[pc + 2];
+			uint16_t fn_idx = (o1 << 8) | o2;
+			struct native_info native = bc0->native_pool[fn_idx];
+
+			c0_value *args = xcalloc(native.num_args, sizeof *args);
+			native_fn *fn = native_function_table[native.function_table_index];
+
+			for (int i = native.num_args - 1; i >= 0; i--) {
+				args[i] = c0v_pop(S);
+			}
+
+			c0_value v = (*fn) (args);
+			c0v_push(S, v);
+			pc += 3;
+			free(args);
+			break;
+		}
+
 
 
     /* Memory allocation and access operations: */
