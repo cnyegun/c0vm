@@ -136,7 +136,7 @@ IF_DEBUG(fprintf(stderr, "Returning %d from execute()\n", retval));
 			}
 			int32_t x = val2int(c0v_pop(S));
 			if (x == INT32_MIN && y == -1) {
-				c0_arith_error("INT32_MIN / -1");
+				c0_arith_error("INT32_MIN % -1");
 			}
 			c0v_push(S, int2val(x % y));
 			break;
@@ -174,7 +174,6 @@ IF_DEBUG(fprintf(stderr, "Returning %d from execute()\n", retval));
 				c0_arith_error("Invalid shift range");
 				// I don't free here because exit() will terminate 
 				// and the system will reclaim
-				exit(EXIT_FAILURE);
 			}
 			c0v_push(S, int2val(x >> y));
 			break;
@@ -188,7 +187,6 @@ IF_DEBUG(fprintf(stderr, "Returning %d from execute()\n", retval));
 				c0_arith_error("Invalid shift range");
 				// I don't free here because exit() will terminate 
 				// and the system will reclaim
-				exit(EXIT_FAILURE);
 			}
 			c0v_push(S, int2val(x << y));
 			break;
