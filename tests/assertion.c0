@@ -1,0 +1,5 @@
+int main() {
+	assert(true);
+	assert(!false);
+	return 0;
+}

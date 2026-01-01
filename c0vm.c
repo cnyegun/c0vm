@@ -245,7 +245,6 @@ IF_DEBUG(fprintf(stderr, "Returning %d from execute()\n", retval));
 			break;
 		}
 
-
     /* Assertions and errors */
 
     case ATHROW: {
@@ -264,24 +263,106 @@ IF_DEBUG(fprintf(stderr, "Returning %d from execute()\n", retval));
 			break;
 		}
 
-
     /* Control flow operations */
 
-    case NOP:
+    case NOP: {
+			pc++;
+			break;
+		}
 
-    case IF_CMPEQ:
+    case IF_CMPEQ: {
+			// Pop two value from the stack and compare, if true => modify pc
+			uint16_t o1 = P[pc + 1];
+			uint16_t o2 = P[pc + 2];
+			int16_t offset = (int16_t) (o1 << 8 | o2);
 
-    case IF_CMPNE:
+			c0_value v2 = c0v_pop(S);
+			c0_value v1 = c0v_pop(S);
 
-    case IF_ICMPLT:
+			if (val_equal(v1, v2)) pc += offset;
+			else pc += 3;
+			break;
+		}
 
-    case IF_ICMPGE:
+    case IF_CMPNE: {
+			// Pop two value from the stack and compare, if false => modify pc
+			uint16_t o1 = P[pc + 1];
+			uint16_t o2 = P[pc + 2];
+			int16_t offset = (int16_t) (o1 << 8 | o2);
 
-    case IF_ICMPGT:
+			c0_value v2 = c0v_pop(S);
+			c0_value v1 = c0v_pop(S);
 
-    case IF_ICMPLE:
+			if (!val_equal(v1, v2)) pc += offset;
+			else pc += 3;
+			break;
+		}
 
-    case GOTO:
+
+    case IF_ICMPLT: {
+			uint16_t o1 = P[pc + 1];
+			uint16_t o2 = P[pc + 2];
+			int16_t offset = (int16_t) (o1 << 8 | o2);
+
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+
+			if (x < y) pc += offset;
+			else pc += 3;
+			break;
+		}
+
+
+    case IF_ICMPGE: {
+			uint16_t o1 = P[pc + 1];
+			uint16_t o2 = P[pc + 2];
+			int16_t offset = (int16_t) (o1 << 8 | o2);
+
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+
+			if (x >= y) pc += offset;
+			else pc += 3;
+			break;
+		}
+
+
+    case IF_ICMPGT: {
+			uint16_t o1 = P[pc + 1];
+			uint16_t o2 = P[pc + 2];
+			int16_t offset = (int16_t) (o1 << 8 | o2);
+
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+
+			if (x > y) pc += offset;
+			else pc += 3;
+			break;
+		}
+
+
+    case IF_ICMPLE: {
+			uint16_t o1 = P[pc + 1];
+			uint16_t o2 = P[pc + 2];
+			int16_t offset = (int16_t) (o1 << 8 | o2);
+
+			int32_t y = val2int(c0v_pop(S));
+			int32_t x = val2int(c0v_pop(S));
+
+			if (x <= y) pc += offset;
+			else pc += 3;
+			break;
+		}
+
+
+    case GOTO: {
+			uint16_t o1 = P[pc + 1];
+			uint16_t o2 = P[pc + 2];
+			int16_t offset = (int16_t) (o1 << 8 | o2);
+
+			pc += offset;
+			break;
+		}
 
 
     /* Function call operations: */
