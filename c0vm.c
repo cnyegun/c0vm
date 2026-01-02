@@ -95,6 +95,7 @@ int execute(struct bc0_file *bc0) {
 				c0v_push(S, retval);
 				break;
 			}
+			stack_free(callStack, free);
 			return val2int(retval);
     }
 
@@ -441,10 +442,9 @@ int execute(struct bc0_file *bc0) {
 			// Read 4 bytes value from that memory address
 			// Pop that result back to the stack.
 			uint32_t *a = val2ptr(c0v_pop(S));
-			if (a != NULL) {
-				uint32_t x = *a;
-				c0v_push(S, int2val(x));
-			}
+			if (a == NULL) c0_memory_error("NULL dereference");
+			uint32_t x = *a;
+			c0v_push(S, int2val(x));
 			pc++;
 			break;
 		}
@@ -455,8 +455,8 @@ int execute(struct bc0_file *bc0) {
 			// Store the int to the address
 			uint32_t x = val2int(c0v_pop(S));
 			uint32_t *a = val2ptr(c0v_pop(S));
-			if (a != NULL)
-				*a = x;
+			if (a == NULL) c0_memory_error("NULL dereference");
+			*a = x;
 			pc++;
 			break;
 		}
@@ -466,9 +466,9 @@ int execute(struct bc0_file *bc0) {
 			// Read the address from that
 			// Pop result back to the stack
 			uint32_t **a = val2ptr(c0v_pop(S));
+			if (a == NULL) c0_memory_error("NULL deference");
 			uint32_t *b = *a;
-			if (a != NULL) 
-				c0v_push(S, ptr2val(b));
+			c0v_push(S, ptr2val(b));
 			pc++;
 			break;
 		}
@@ -478,8 +478,8 @@ int execute(struct bc0_file *bc0) {
 			// Pop an pointer a from the stack
 			uint32_t *b = val2ptr(c0v_pop(S));
 			uint32_t **a = val2ptr(c0v_pop(S));
-			if (a != NULL)
-				*a = b;
+			if (a == NULL) c0_memory_error("NULL deference");
+			*a = b;
 			pc++;
 			break;
 		}
@@ -487,10 +487,9 @@ int execute(struct bc0_file *bc0) {
     case CMLOAD: {
 			// Pop an address from the stack
 			uint32_t *a = val2ptr(c0v_pop(S));
-			if (a != NULL) {
-				uint32_t x = (uint32_t) (*a);
-				c0v_push(S, int2val(x));
-			}
+			if (a == NULL) c0_memory_error("NULL deference");
+			uint32_t x = (uint32_t) (*a);
+			c0v_push(S, int2val(x));
 			pc++;
 			break;
 		}
@@ -499,32 +498,58 @@ int execute(struct bc0_file *bc0) {
 			// Pop an int from the stack
 			uint32_t x = val2int(c0v_pop(S));	
 			uint32_t *a = val2ptr(c0v_pop(S));
-			if (a != NULL)
-				*a = x & 0x7f;
+			if (a == NULL) c0_memory_error("NULL deference");
+			*a = x & 0x7f;
 			pc++;
 			break;
 		}
 
     case AADDF: {
 			ubyte f = P[pc + 1];
-			uint32_t *a = val2ptr(c0v_pop(S));
-			if (a != NULL) {
-				*a = *a + (uint32_t) f;
-				c0v_push(S, ptr2val(a));
-			} else if (a == NULL) {
-				c0_memory_error("NULL reference");
-			}
+			void *a = val2ptr(c0v_pop(S));
+			if (a == NULL) c0_memory_error("NULL deference");
+			void *p = (void *) ((ubyte *)a + f);
+			c0v_push(S, ptr2val(p));
 			pc += 2;
 			break;
 		}
 
     /* Array operations: */
 
-    case NEWARRAY:
+    case NEWARRAY: {
+			int32_t n = val2int(c0v_pop(S));
+			if (n < 0) c0_memory_error("array size cannot be negative");
+			size_t s = P[pc + 1];
+			// Alloc the array struct
+			c0_array *arr = (c0_array *) xmalloc(sizeof *arr);
+			arr->count = n;
+			arr->elt_size = s;
+			arr->elems = xcalloc(n, s);
+			c0v_push(S, ptr2val(arr));
+			pc += 2;
+			break;
+		}
 
-    case ARRAYLENGTH:
+    case ARRAYLENGTH: {
+			c0_array *arr = (c0_array *) val2ptr(c0v_pop(S));
+			if (arr == NULL) c0_memory_error("NULL ptr reference");
+			uint32_t n = arr->count;
+			c0v_push(S, int2val(n));
+			pc++;
+			break;
+		}
 
-    case AADDS:
+    case AADDS: {
+			int32_t index = val2int(c0v_pop(S));
+			if (index < 0) c0_memory_error("invalid index");
+			c0_array *a = (c0_array *) val2ptr(c0v_pop(S));
+			if (a == NULL) c0_memory_error("NULL dereference");
+			uint8_t *base = (uint8_t *) a->elems;
+			void *p = base + (size_t)a->elt_size * (size_t)index;
+			c0v_push(S, ptr2val(p));
+			pc++;
+			break;
+		}
 
 
     /* BONUS -- C1 operations */

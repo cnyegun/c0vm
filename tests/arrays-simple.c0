@@ -1,0 +1,5 @@
+int main() {
+	int[] A = alloc_array(int, 3);
+	A[2] = 5;
+	return A[2];
+}
