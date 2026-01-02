@@ -1,0 +1,9 @@
+#use <conio>
+
+int main() {
+	char **c = alloc(char *);
+	*c = alloc(char);
+	**c = 'I';
+	printf("%c \n", **c);
+	return 0;
+}

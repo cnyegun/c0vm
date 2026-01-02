@@ -436,20 +436,87 @@ int execute(struct bc0_file *bc0) {
 			break;
 		}
 
-    case IMLOAD:
+    case IMLOAD: {
+			// Pop an address from the stack
+			// Read 4 bytes value from that memory address
+			// Pop that result back to the stack.
+			uint32_t *a = val2ptr(c0v_pop(S));
+			if (a != NULL) {
+				uint32_t x = *a;
+				c0v_push(S, int2val(x));
+			}
+			pc++;
+			break;
+		}
 
-    case IMSTORE:
+    case IMSTORE: {
+			// Pop an int from the stack
+			// Pop another address
+			// Store the int to the address
+			uint32_t x = val2int(c0v_pop(S));
+			uint32_t *a = val2ptr(c0v_pop(S));
+			if (a != NULL)
+				*a = x;
+			pc++;
+			break;
+		}
 
-    case AMLOAD:
+    case AMLOAD: {
+			// Pop an address from stack
+			// Read the address from that
+			// Pop result back to the stack
+			uint32_t **a = val2ptr(c0v_pop(S));
+			uint32_t *b = *a;
+			if (a != NULL) 
+				c0v_push(S, ptr2val(b));
+			pc++;
+			break;
+		}
 
-    case AMSTORE:
+    case AMSTORE: {
+			// Pop an address b from the stack
+			// Pop an pointer a from the stack
+			uint32_t *b = val2ptr(c0v_pop(S));
+			uint32_t **a = val2ptr(c0v_pop(S));
+			if (a != NULL)
+				*a = b;
+			pc++;
+			break;
+		}
 
-    case CMLOAD:
+    case CMLOAD: {
+			// Pop an address from the stack
+			uint32_t *a = val2ptr(c0v_pop(S));
+			if (a != NULL) {
+				uint32_t x = (uint32_t) (*a);
+				c0v_push(S, int2val(x));
+			}
+			pc++;
+			break;
+		}
 
-    case CMSTORE:
+    case CMSTORE: {
+			// Pop an int from the stack
+			uint32_t x = val2int(c0v_pop(S));	
+			uint32_t *a = val2ptr(c0v_pop(S));
+			if (a != NULL)
+				*a = x & 0x7f;
+			pc++;
+			break;
+		}
 
-    case AADDF:
-
+    case AADDF: {
+			ubyte f = P[pc + 1];
+			uint32_t *a = val2ptr(c0v_pop(S));
+			if (a != NULL) {
+				*a = *a + (uint32_t) f;
+				c0v_push(S, ptr2val(a));
+			} else if (a == NULL) {
+				c0_memory_error("NULL reference");
+			}
+			pc += 2;
+			break;
+		}
 
     /* Array operations: */
 
