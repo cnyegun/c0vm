@@ -428,7 +428,13 @@ int execute(struct bc0_file *bc0) {
 
     /* Memory allocation and access operations: */
 
-    case NEW:
+    case NEW: {
+			ubyte s = P[pc + 1];
+			pc += 2;
+			void *p = xmalloc(s);
+			c0v_push(S, ptr2val(p));
+			break;
+		}
 
     case IMLOAD:
 
